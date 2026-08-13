@@ -1,9 +1,16 @@
-import { COLORS } from '../lib/colors'
+import { COLORS, type AccentColor } from '../lib/colors'
 
 export function ColorPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  // Une couleur d'enseigne reconnue ne fait pas partie des 8 teintes : on
+  // l'ajoute en tête pour qu'elle apparaisse bien comme sélectionnée.
+  const isCustom = !COLORS.some((c) => c.hex.toLowerCase() === value.toLowerCase())
+  const palette: AccentColor[] = isCustom
+    ? [{ hex: value, label: 'Couleur de l’enseigne' }, ...COLORS]
+    : COLORS
+
   return (
     <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Couleur de la carte">
-      {COLORS.map((color) => {
+      {palette.map((color) => {
         const selected = value.toLowerCase() === color.hex.toLowerCase()
         return (
           <button

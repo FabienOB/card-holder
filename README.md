@@ -86,6 +86,32 @@ explicite et un bouton vers la saisie manuelle.
 même que celui utilisé en interne par `toSVG`. Le SVG produit est identique octet pour octet
 (vérifié sur les 8 formats), et le bundle passe de **1,25 Mo à 558 Ko** (183 Ko gzip).
 
+### Reconnaissance d'enseigne
+
+À la saisie du nom, l'app reconnaît une cinquantaine d'enseignes françaises courantes
+(`src/lib/brands.ts`) et applique automatiquement une couleur proche de celle de la marque :
+« Picard » → bleu, « Bricomarché » → rouge. La tuile affiche un **monogramme** dérivé du nom
+(« Brico Dépôt » → « BD ») quand il n'y a ni photo ni pictogramme.
+
+C'est une **table embarquée** : aucun appel réseau, rien qui sorte du téléphone, et ça marche
+en mode avion. Aucun logo de marque n'est reproduit — seule la teinte est reprise, et les
+couleurs sont des approximations choisies à l'œil.
+
+La reconnaissance n'écrase jamais un choix explicite : elle ne s'applique qu'aux **nouvelles**
+cartes, et s'arrête dès que l'utilisateur touche au sélecteur de couleur. Une enseigne inconnue
+laisse simplement la couleur par défaut.
+
+### Couleurs et contraste
+
+La palette compte 18 teintes, dont des claires (jaune, ambre, bleu ciel, corail). C'est possible
+parce que la couleur du texte n'est plus figée en blanc : `readableTextOn()` calcule la
+luminance relative WCAG du fond et choisit entre texte clair et texte sombre.
+
+Un test automatique vérifie que **chaque** teinte de la palette et **chaque** couleur de marque
+atteint le seuil AA (4,5:1) avec le texte qui lui est associé. Il a d'ailleurs servi : deux
+couleurs de marque (Decathlon, Subway) tombaient à 4,2 et 4,4:1 et ont été très légèrement
+assombries. Ajouter une couleur qui ne respecte pas le seuil fait échouer le test.
+
 ### Images
 
 Toute photo importée est redimensionnée à 1200 px sur le grand côté (JPEG 0.8) via `canvas`,
@@ -165,9 +191,12 @@ installée en arrière-plan et prend effet au lancement suivant.
 
 ## Accessibilité
 
-Cibles tactiles ≥ 44 px, libellés ARIA sur tous les contrôles à icône, contrastes conformes AA
-(le voile sombre sur les vignettes photo garantit la lisibilité du nom quelle que soit l'image),
-messages d'erreur reliés aux champs via `aria-describedby`.
+Cibles tactiles ≥ 44 px, libellés ARIA sur tous les contrôles à icône, messages d'erreur reliés
+aux champs via `aria-describedby`.
+
+Contrastes AA garantis par construction : couleur de texte calculée selon la luminance du fond
+(vérifiée par test sur toute la palette et toutes les couleurs de marque), et voile sombre sur
+les vignettes photo pour que le nom reste lisible quelle que soit l'image.
 
 ## Vérifications effectuées
 
@@ -183,6 +212,10 @@ messages d'erreur reliés aux champs via `aria-describedby`.
 - 13 assertions sur le partage natif avec API navigateur simulée : partage accepté, annulation
   (`AbortError` → aucun téléchargement parasite), activation expirée (`NotAllowedError` → repli),
   fichiers non partageables, API absente.
+- 25 assertions sur la reconnaissance d'enseigne et le contraste : correspondance insensible à
+  la casse et aux accents, clé la plus longue prioritaire, monogrammes, et **audit AA de la
+  totalité des couleurs** (palette + marques). Pire cas mesuré : 4,52:1 (marques), 4,71:1
+  (palette), pour un seuil à 4,5:1.
 - Build audité : aucune URL externe chargée à l'exécution ; app shell entièrement précachée.
 
 L'application **n'a pas pu être testée dans un navigateur** dans cet environnement (pas de

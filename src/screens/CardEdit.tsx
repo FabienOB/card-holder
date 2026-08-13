@@ -7,6 +7,7 @@ import { ScannerView } from '../components/ScannerView'
 import { newId, useCards } from '../hooks/useCards'
 import { isScannerSupported } from '../hooks/useBarcodeScanner'
 import { DEFAULT_COLOR } from '../lib/colors'
+import { findBrand } from '../lib/brands'
 import { resizeImage } from '../lib/image'
 import { guessFormat, validateCode } from '../lib/validation'
 import { BARCODE_FORMATS, FORMAT_LABELS, type BarcodeFormat, type LoyaltyCard } from '../types'
@@ -25,6 +26,9 @@ export function CardEdit() {
   const [logoId, setLogoId] = useState<string | undefined>(undefined)
   const [imageBlob, setImageBlob] = useState<Blob | undefined>(undefined)
 
+  // Passe à true dès que l'utilisateur choisit une couleur lui-même :
+  // à partir de là, la reconnaissance d'enseigne ne touche plus à rien.
+  const [colorTouched, setColorTouched] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [errors, setErrors] = useState<{ name?: string; code?: string; global?: string }>({})
   const [saving, setSaving] = useState(false)
@@ -58,6 +62,19 @@ export function CardEdit() {
 
   const codeError = code.trim() ? validateCode(code.trim(), format) : null
   const scannerAvailable = useMemo(() => isScannerSupported(), [])
+
+  // Reconnaissance d'enseigne : purement locale, aucun appel réseau.
+  const brand = useMemo(() => findBrand(name), [name])
+
+  /**
+   * Applique la couleur de la marque reconnue. Uniquement sur une **nouvelle**
+   * carte et tant que l'utilisateur n'a pas choisi de couleur : on ne modifie
+   * jamais un choix explicite, ni la couleur d'une carte existante.
+   */
+  useEffect(() => {
+    if (existing || colorTouched) return
+    setColor(brand ? brand.color : DEFAULT_COLOR)
+  }, [brand, existing, colorTouched])
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return
@@ -289,7 +306,19 @@ export function CardEdit() {
 
         <section className="space-y-2">
           <h2 className="text-sm font-medium text-slate-700">Couleur</h2>
-          <ColorPicker value={color} onChange={setColor} />
+          <ColorPicker
+            value={color}
+            onChange={(hex) => {
+              setColorTouched(true)
+              setColor(hex)
+            }}
+          />
+          {brand && !colorTouched && !existing && (
+            <p className="text-xs text-slate-500" role="status">
+              Enseigne reconnue : couleur {brand.label} appliquée. Choisissez-en une autre si
+              elle ne vous convient pas.
+            </p>
+          )}
         </section>
 
         {!imageBlob && (
