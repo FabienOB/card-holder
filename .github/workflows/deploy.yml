@@ -34,7 +34,12 @@ jobs:
       # une erreur de types casse le déploiement, ce qui est voulu.
       - run: npm run build
 
+      # `enablement: true` bascule la source Pages sur « GitHub Actions » via
+      # l'API si ce n'est pas déjà fait. Sans cela, l'étape échoue tant que le
+      # dépôt est configuré en « Deploy from a branch ».
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
