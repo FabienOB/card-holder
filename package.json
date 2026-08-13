@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "node scripts/run-tests.mjs",
+    "logos:preview": "node scripts/preview-logos.mjs",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
