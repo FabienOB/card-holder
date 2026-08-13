@@ -238,20 +238,16 @@ export const LOGOS: GenericLogo[] = [
     label: 'Animalerie',
     category: 'store',
     render: ({ className }) => (
-      // Tête de chien. Les oreilles sont des formes **fermées** tombant de
-      // part et d'autre d'un crâne étroit : c'est ce qui la distingue d'un
-      // chat, dont les oreilles seraient pointues et dans l'axe du crâne.
+      // Empreinte : quatre coussinets et la pelote. Retenue de préférence à
+      // une tête de chien — la patte reste lisible plus petite et ne se
+      // limite pas à une espèce.
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
-          <path d="M8.3 7.6c-2.9.3-4.9 2.6-4.9 5.5 0 2.2 1.4 3.7 3.3 3.7 1 0 1.8-.7 1.8-1.7V8.9z" />
-          <path d="M15.7 7.6c2.9.3 4.9 2.6 4.9 5.5 0 2.2-1.4 3.7-3.3 3.7-1 0-1.8-.7-1.8-1.7V8.9z" />
-          <path d="M8.3 8.4a4.6 4.6 0 0 1 7.4 0v5.1c0 3-1.7 5.6-3.7 5.6s-3.7-2.6-3.7-5.6z" />
-          <path d="M12 15.6v1.4" />
-        </g>
-        <g fill="currentColor">
-          <circle cx="10.3" cy="11" r="0.85" />
-          <circle cx="13.7" cy="11" r="0.85" />
-          <circle cx="12" cy="14.5" r="1" />
+          <ellipse cx="6.6" cy="10.2" rx="1.7" ry="2.1" />
+          <ellipse cx="10.4" cy="7.4" rx="1.7" ry="2.2" />
+          <ellipse cx="14.6" cy="7.4" rx="1.7" ry="2.2" />
+          <ellipse cx="18.4" cy="10.2" rx="1.7" ry="2.1" />
+          <path d="M12.5 13.2c2.7 0 4.9 2 4.9 4.3 0 1.9-1.5 3.2-3.4 3.2h-3c-1.9 0-3.4-1.3-3.4-3.2 0-2.3 2.2-4.3 4.9-4.3z" />
         </g>
       </svg>
     ),

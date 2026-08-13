@@ -26,8 +26,12 @@ npm run icons         # régénère les icônes PNG et le favicon dans public/
 > **`logos:preview`** existe parce que les pictogrammes sont écrits à la main en SVG et que
 > rien, dans le build, ne dit s'ils *ressemblent* à quelque chose. Le script transpile le JSX,
 > aplatit chaque forme en polyligne et rend le trait par distance au segment — ce qui reproduit
-> les jointures arrondies du composant. Il a immédiatement servi : le pictogramme « Animalerie »
-> représentait un chat au lieu d'un chien.
+> les jointures arrondies du composant.
+>
+> Piège rencontré : au premier rendu, le pictogramme « Boulangerie » paraissait cassé alors
+> qu'il était correct — le rasteriseur ne gérait pas la commande `s` (cubique lissée) et
+> décalait la lecture de tout le chemin. Une commande inconnue lève désormais une erreur, plutôt
+> que de produire silencieusement un tracé faux qui ferait « réparer » un dessin sain.
 
 > **Note sur le service worker** : il est désactivé en `dev` (`devOptions.enabled: false`).
 > Pour tester le comportement hors ligne, il faut passer par `npm run build && npm run preview`.
