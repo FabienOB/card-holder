@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    /* Pas de rebond élastique : l'app est une pile d'écrans, pas une page. */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Le halo bleu de sélection n'a aucun sens sur un écran montré en caisse. */
+  button,
+  a {
+    -webkit-touch-callout: none;
+  }
+}
