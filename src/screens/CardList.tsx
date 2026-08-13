@@ -165,7 +165,16 @@ export function CardList() {
         </div>
       )}
 
-      {cards.length === 0 && status === 'ready' ? (
+      {/*
+        Tant que la lecture n'est pas terminée, on n'affirme rien : annoncer
+        « aucune carte » pendant le chargement laisse croire à une perte de
+        données. On attend d'avoir réellement lu la base.
+      */}
+      {status === 'loading' ? (
+        <p className="px-4 py-16 text-center text-slate-400" role="status">
+          Chargement…
+        </p>
+      ) : cards.length === 0 ? (
         <EmptyState />
       ) : visible.length === 0 ? (
         <p className="px-4 py-16 text-center text-slate-500">

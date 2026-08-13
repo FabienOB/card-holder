@@ -103,6 +103,18 @@ contiennent des cartes sans catégorie : l'`upgrade` les rattache toutes à « E
 était le seul usage jusque-là. Les sauvegardes JSON exportées avant cette évolution s'importent
 sans perte, avec le même repli.
 
+### Migration bloquée
+
+Une migration de schéma IndexedDB ne peut s'appliquer que si **aucune autre connexion** ne tient
+l'ancienne version ouverte. Sur Android, une PWA laissée en arrière-plan peut être gelée par le
+système : elle ne traite plus l'événement `versionchange`, ne se ferme donc pas, et bloque la
+migration indéfiniment.
+
+`openDatabase()` (dans `src/db/db.ts`) borne l'attente et remonte une `DatabaseBlockedError`
+avec la marche à suivre — fermer les autres fenêtres — en précisant que les données ne sont pas
+perdues. C'est un cas réellement rencontré : sans ce traitement, l'application restait figée sur
+un écran vide qui laissait croire à une disparition des cartes.
+
 ### Reconnaissance d'enseigne
 
 À la saisie du nom, l'app reconnaît une cinquantaine d'enseignes françaises courantes
@@ -228,6 +240,7 @@ l'esprit du projet, dont l'atout principal est de n'avoir aucune dépendance à 
 | `brands` | reconnaissance d'enseigne + **audit AA de toutes les couleurs** |
 | `categories` | catégories, pictogrammes, compatibilité ascendante des sauvegardes |
 | `migration` | **migration Dexie v1 → v2** sur une vraie IndexedDB (`fake-indexeddb`) |
+| `blocked` | **migration bloquée** par une autre connexion : erreur remontée, pas de blocage infini, données intactes |
 
 La suite tourne dans le workflow de déploiement, avant le build : un échec bloque la mise en
 ligne. La migration est la plus critique — une régression y ferait disparaître des cartes sur

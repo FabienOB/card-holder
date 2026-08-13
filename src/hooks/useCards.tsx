@@ -9,7 +9,7 @@ import {
   touchCard,
   StorageError,
 } from '../db/repository'
-import { requestPersistentStorage } from '../db/db'
+import { openDatabase, requestPersistentStorage } from '../db/db'
 
 type Status = 'loading' | 'ready' | 'error'
 
@@ -45,6 +45,9 @@ export function CardsProvider({ children }: { children: ReactNode }) {
     setStatus('loading')
     setError(null)
     try {
+      // Ouverture explicite : une migration bloquée doit remonter une erreur
+      // actionnable, et non laisser l'écran en chargement indéfini.
+      await openDatabase()
       const rows = await listCards()
       setCards(rows)
       setStatus('ready')
