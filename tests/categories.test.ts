@@ -15,11 +15,19 @@ check('valeur inconnue', isCardCategory('bocaux'), false)
 check('undefined', isCardCategory(undefined), false)
 
 // --- Pictogrammes ----------------------------------------------------
-check('3 pictos de contenant', logosForCategory('tare').map(l=>l.id), ['jar','box','bottle'])
-check('8 pictos d’enseigne', logosForCategory('store').length, 8)
+check('4 pictos de contenant', logosForCategory('tare').map(l=>l.id), ['jar','box','bottle','bag'])
+check('16 pictos d’enseigne', logosForCategory('store').length, 16)
+// Les id sont persistés en base : les renommer ferait disparaître le
+// pictogramme des cartes déjà enregistrées.
+check('id historiques intacts',
+  ['supermarket','pharmacy','fuel','books','sport','beauty','restaurant','diy','jar','box','bottle']
+    .every(id => LOGO_BY_ID.has(id)), true)
+check('nouveaux pictos présents',
+  ['frozen','bakery','clothing','optical','tech','garden','home','pets','bag']
+    .every(id => LOGO_BY_ID.has(id)), true)
 check('aucun id de picto en double', LOGOS.length, new Set(LOGOS.map(l=>l.id)).size)
 check('tous les pictos ont une catégorie valide', LOGOS.every(l=>isCardCategory(l.category)), true)
-check('les 3 contenants sont indexés', ['jar','box','bottle'].every(id=>LOGO_BY_ID.has(id)), true)
+check('les contenants sont indexés', ['jar','box','bottle','bag'].every(id=>LOGO_BY_ID.has(id)), true)
 
 // --- Compatibilité ascendante des sauvegardes ------------------------
 // Une sauvegarde exportée AVANT l'ajout des catégories n'a pas le champ.

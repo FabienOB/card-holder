@@ -58,6 +58,14 @@ export const BRANDS: Brand[] = [
   { key: 'gifi', label: 'Gifi', color: '#E2001A' },
   { key: 'action', label: 'Action', color: '#003DA5' },
 
+  // Jardinerie / animalerie
+  { key: 'gammvert', label: 'Gamm vert', color: '#009640' },
+  { key: 'jardiland', label: 'Jardiland', color: '#00843D' },
+  { key: 'truffaut', label: 'Truffaut', color: '#C8102E' },
+  { key: 'botanic', label: 'Botanic', color: '#55A630' },
+  { key: 'maxizoo', label: 'Maxi Zoo', color: '#0B5FA5' },
+  { key: 'animalis', label: 'Animalis', color: '#E2001A' },
+
   // Culture / high-tech
   { key: 'fnac', label: 'Fnac', color: '#E1A200' },
   { key: 'darty', label: 'Darty', color: '#E2001A' },
