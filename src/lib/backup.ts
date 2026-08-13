@@ -58,19 +58,71 @@ export async function buildBackup(cards: LoyaltyCard[]): Promise<BackupFile> {
   }
 }
 
+function serializeBackup(backup: BackupFile): { blob: Blob; filename: string } {
+  const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10)
+  return {
+    blob: new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }),
+    filename: `cartes-fidelite-${stamp}.json`,
+  }
+}
+
 /** Déclenche le téléchargement du fichier de sauvegarde. */
 export function downloadBackup(backup: BackupFile): void {
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+  const { blob, filename } = serializeBackup(backup)
   const url = URL.createObjectURL(blob)
-  const stamp = new Date(backup.exportedAt).toISOString().slice(0, 10)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = `cartes-fidelite-${stamp}.json`
+  anchor.download = filename
   document.body.appendChild(anchor)
   anchor.click()
   anchor.remove()
   // Laisse au navigateur le temps de démarrer le téléchargement.
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+export type ShareOutcome = 'shared' | 'cancelled' | 'downloaded'
+
+/**
+ * Le partage de *fichiers* est plus restreint que `navigator.share` seul :
+ * on teste les deux, puis `canShare({ files })` avec le fichier réel, car
+ * certains navigateurs acceptent le partage de texte mais pas de fichiers.
+ */
+export function canShareFiles(): boolean {
+  return typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare
+}
+
+/**
+ * Envoie la sauvegarde vers une autre application (WhatsApp, Drive, un autre
+ * téléphone…) via la feuille de partage Android, en un seul geste.
+ *
+ * Deux points d'attention :
+ *
+ *  - `navigator.share` exige une **activation utilisateur récente**. La
+ *    sérialisation (encodage base64 des photos) doit donc rester courte ;
+ *    si l'activation a malgré tout expiré, l'appel lève `NotAllowedError`
+ *    et on retombe sur le téléchargement classique.
+ *  - Une annulation par l'utilisateur lève `AbortError`. Ce n'est pas une
+ *    erreur : on ne déclenche surtout pas un téléchargement qu'il n'a pas
+ *    demandé, on ne fait rien.
+ */
+export async function shareOrDownloadBackup(backup: BackupFile): Promise<ShareOutcome> {
+  const { blob, filename } = serializeBackup(backup)
+
+  if (canShareFiles()) {
+    const file = new File([blob], filename, { type: 'application/json' })
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Sauvegarde des cartes de fidélité' })
+        return 'shared'
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return 'cancelled'
+        // Tout autre échec (activation expirée, cible indisponible) : repli.
+      }
+    }
+  }
+
+  downloadBackup(backup)
+  return 'downloaded'
 }
 
 export class BackupParseError extends Error {}

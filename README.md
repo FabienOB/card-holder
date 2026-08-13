@@ -96,9 +96,19 @@ qu'au moment de l'export JSON.
 
 ## Sauvegarde et partage entre téléphones
 
-Réglages → **Exporter** produit un fichier `cartes-fidelite-AAAA-MM-JJ.json` contenant toutes
-les cartes et leurs photos. Ce fichier se transfère par le moyen que l'on veut (messagerie,
-Bluetooth, clé USB…).
+Réglages → **Partager** produit un fichier `cartes-fidelite-AAAA-MM-JJ.json` contenant toutes
+les cartes et leurs photos, et ouvre la feuille de partage Android (`navigator.share`) :
+messagerie, cloud, autre téléphone — en un seul geste, sans passer par le gestionnaire de
+fichiers.
+
+Un bouton **Télécharger le fichier** reste disponible à côté. Si le partage de fichiers n'est
+pas supporté par le navigateur, seul le téléchargement est proposé — l'app ne montre jamais
+un bouton qui ne marcherait pas.
+
+> **Attention** : c'est la **seule sauvegarde qui existe**. Les données ne quittent jamais
+> l'appareil ; elles disparaissent si l'on efface les données de navigation, si l'on
+> désinstalle la PWA, ou si l'on perd le téléphone. `navigator.storage.persist()` protège
+> contre l'éviction automatique par manque d'espace, pas contre une suppression volontaire.
 
 Réglages → **Choisir un fichier** affiche le nombre de cartes détectées **avant** toute écriture,
 puis laisse choisir entre :
@@ -170,6 +180,9 @@ messages d'erreur reliés aux champs via `aria-describedby`.
 - 43 assertions sur la logique pure (checksums EAN-13/EAN-8, jeux de caractères CODE_39 /
   ITF / CODABAR, expansion UPC-E, groupement par 4, aller-retour d'export/import, rejet des
   fichiers étrangers et des entrées corrompues) : toutes vertes.
+- 13 assertions sur le partage natif avec API navigateur simulée : partage accepté, annulation
+  (`AbortError` → aucun téléchargement parasite), activation expirée (`NotAllowedError` → repli),
+  fichiers non partageables, API absente.
 - Build audité : aucune URL externe chargée à l'exécution ; app shell entièrement précachée.
 
 L'application **n'a pas pu être testée dans un navigateur** dans cet environnement (pas de

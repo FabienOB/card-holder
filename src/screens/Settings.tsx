@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCards } from '../hooks/useCards'
 import { getStorageEstimate } from '../db/db'
-import { buildBackup, downloadBackup, parseBackup, BackupParseError } from '../lib/backup'
+import {
+  buildBackup,
+  canShareFiles,
+  downloadBackup,
+  parseBackup,
+  shareOrDownloadBackup,
+  BackupParseError,
+} from '../lib/backup'
 import { formatBytes } from '../lib/image'
 import type { LoyaltyCard } from '../types'
 
@@ -27,12 +34,34 @@ export function Settings() {
     void getStorageEstimate().then(setStorage)
   }, [cards])
 
-  const doExport = async () => {
+  // Calculé une fois : détermine si l'on propose le partage natif.
+  const shareAvailable = useMemo(() => canShareFiles(), [])
+
+  const doShare = async () => {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const outcome = await shareOrDownloadBackup(await buildBackup(cards))
+      if (outcome === 'shared') {
+        setMessage({ kind: 'ok', text: `${cards.length} carte(s) partagée(s).` })
+      } else if (outcome === 'downloaded') {
+        // Partage indisponible ou refusé : le fichier a été téléchargé.
+        setMessage({ kind: 'ok', text: `${cards.length} carte(s) exportée(s) dans vos téléchargements.` })
+      }
+      // 'cancelled' : l'utilisateur a fermé la feuille de partage, on se tait.
+    } catch (e) {
+      setMessage({ kind: 'error', text: e instanceof Error ? e.message : "L'export a échoué." })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const doDownload = async () => {
     setBusy(true)
     setMessage(null)
     try {
       downloadBackup(await buildBackup(cards))
-      setMessage({ kind: 'ok', text: `${cards.length} carte(s) exportée(s).` })
+      setMessage({ kind: 'ok', text: `${cards.length} carte(s) exportée(s) dans vos téléchargements.` })
     } catch (e) {
       setMessage({ kind: 'error', text: e instanceof Error ? e.message : "L'export a échoué." })
     } finally {
@@ -110,16 +139,44 @@ export function Settings() {
         <section className="rounded-xl border border-slate-200 bg-white p-4">
           <h2 className="mb-1 font-semibold text-slate-900">Sauvegarde</h2>
           <p className="mb-3 text-sm leading-relaxed text-slate-600">
-            Un fichier JSON contenant toutes les cartes et leurs photos. C’est aussi comme cela
-            qu’on transfère les cartes vers un autre téléphone de la famille.
+            Un fichier JSON contenant toutes les cartes et leurs photos.
+            {shareAvailable
+              ? ' Envoyez-le directement vers une messagerie, un cloud ou un autre téléphone de la famille.'
+              : ' C’est aussi comme cela qu’on transfère les cartes vers un autre téléphone de la famille.'}
+            {' '}C’est votre seule sauvegarde : les données ne sortent pas de cet appareil.
           </p>
-          <button
-            onClick={doExport}
-            disabled={busy || cards.length === 0}
-            className="min-h-touch w-full rounded-lg bg-slate-900 py-3 font-medium text-white disabled:opacity-40"
-          >
-            Exporter {cards.length > 0 ? `(${cards.length} carte${cards.length > 1 ? 's' : ''})` : ''}
-          </button>
+          {shareAvailable ? (
+            <div className="space-y-2">
+              <button
+                onClick={doShare}
+                disabled={busy || cards.length === 0}
+                className="flex min-h-touch w-full items-center justify-center gap-2 rounded-lg bg-slate-900 py-3 font-medium text-white disabled:opacity-40"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <circle cx="18" cy="5" r="2.5" />
+                  <circle cx="6" cy="12" r="2.5" />
+                  <circle cx="18" cy="19" r="2.5" />
+                  <path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" strokeLinecap="round" />
+                </svg>
+                Partager {cards.length > 0 ? `(${cards.length} carte${cards.length > 1 ? 's' : ''})` : ''}
+              </button>
+              <button
+                onClick={doDownload}
+                disabled={busy || cards.length === 0}
+                className="min-h-touch w-full rounded-lg border border-slate-300 py-3 text-sm font-medium text-slate-700 disabled:opacity-40"
+              >
+                Télécharger le fichier
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={doDownload}
+              disabled={busy || cards.length === 0}
+              className="min-h-touch w-full rounded-lg bg-slate-900 py-3 font-medium text-white disabled:opacity-40"
+            >
+              Exporter {cards.length > 0 ? `(${cards.length} carte${cards.length > 1 ? 's' : ''})` : ''}
+            </button>
+          )}
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-4">
