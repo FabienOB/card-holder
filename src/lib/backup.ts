@@ -1,5 +1,12 @@
 import { base64ToBlob, blobToBase64 } from './image'
-import { BARCODE_FORMATS, type BarcodeFormat, type LoyaltyCard } from '../types'
+import {
+  BARCODE_FORMATS,
+  DEFAULT_CATEGORY,
+  isCardCategory,
+  type BarcodeFormat,
+  type CardCategory,
+  type LoyaltyCard,
+} from '../types'
 import { DEFAULT_COLOR, isValidHex } from './colors'
 
 export const BACKUP_FORMAT = 'card-holder-backup'
@@ -10,6 +17,7 @@ interface BackupCard {
   name: string
   code: string
   format: string
+  category: string
   color: string
   notes?: string
   logoId?: string
@@ -39,6 +47,7 @@ export async function buildBackup(cards: LoyaltyCard[]): Promise<BackupFile> {
       name: card.name,
       code: card.code,
       format: card.format,
+      category: card.category,
       color: card.color,
       notes: card.notes,
       logoId: card.logoId,
@@ -187,6 +196,8 @@ function toCard(entry: unknown): LoyaltyCard | null {
     name: c.name.trim(),
     code: typeof c.code === 'string' ? c.code : '',
     format: c.format as BarcodeFormat,
+    // Sauvegardes d'avant les catégories : tout était une carte d'enseigne.
+    category: (isCardCategory(c.category) ? c.category : DEFAULT_CATEGORY) as CardCategory,
     color: typeof c.color === 'string' && isValidHex(c.color) ? c.color : DEFAULT_COLOR,
     notes: typeof c.notes === 'string' && c.notes.trim() ? c.notes : undefined,
     logoId: typeof c.logoId === 'string' ? c.logoId : undefined,

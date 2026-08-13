@@ -11,11 +11,38 @@ export const BARCODE_FORMATS = [
 
 export type BarcodeFormat = (typeof BARCODE_FORMATS)[number]
 
+/**
+ * Deux usages bien distincts :
+ *  - `store` : carte de fidélité d'une enseigne ;
+ *  - `tare`  : code-barres de tare collé sur un bocal, une boîte ou une
+ *              bouteille, pour l'achat en vrac.
+ */
+export const CARD_CATEGORIES = ['store', 'tare'] as const
+export type CardCategory = (typeof CARD_CATEGORIES)[number]
+
+export const CATEGORY_LABELS: Record<CardCategory, string> = {
+  store: 'Enseignes',
+  tare: 'Bocaux',
+}
+
+/** Libellé au singulier, pour les formulaires. */
+export const CATEGORY_SINGULAR: Record<CardCategory, string> = {
+  store: 'Carte d’enseigne',
+  tare: 'Tare de contenant',
+}
+
+export const DEFAULT_CATEGORY: CardCategory = 'store'
+
+export function isCardCategory(value: unknown): value is CardCategory {
+  return typeof value === 'string' && (CARD_CATEGORIES as readonly string[]).includes(value)
+}
+
 export interface LoyaltyCard {
   id: string
   name: string
   code: string
   format: BarcodeFormat
+  category: CardCategory
   imageBlob?: Blob
   logoId?: string
   color: string

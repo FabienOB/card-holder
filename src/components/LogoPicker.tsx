@@ -1,18 +1,21 @@
-import { LOGOS } from '../lib/logos'
+import { logosForCategory } from '../lib/logos'
+import type { CardCategory } from '../types'
 
 interface Props {
   value?: string
+  category: CardCategory
   onChange: (logoId: string | undefined) => void
 }
 
 /**
  * Proposé uniquement quand la carte n'a pas de photo : donne quand même
- * un repère visuel à la tuile d'accueil.
+ * un repère visuel à la tuile d'accueil. Les formes proposées suivent la
+ * catégorie (contenants pour une tare, commerces pour une enseigne).
  */
-export function LogoPicker({ value, onChange }: Props) {
+export function LogoPicker({ value, category, onChange }: Props) {
   return (
     <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Pictogramme de la carte">
-      {LOGOS.map((logo) => {
+      {logosForCategory(category).map((logo) => {
         const selected = value === logo.id
         return (
           <button

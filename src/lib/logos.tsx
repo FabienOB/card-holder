@@ -1,13 +1,19 @@
 import type { JSX } from 'react'
+import type { CardCategory } from '../types'
 
 /**
  * Bibliothèque de pictogrammes génériques, en SVG inline (aucun fichier,
  * aucune requête réseau). Tracés en `currentColor` pour s'adapter à la
  * couleur d'accent de la tuile.
+ *
+ * Chaque pictogramme est rattaché à une catégorie : le sélecteur ne propose
+ * que les formes pertinentes (des contenants pour une tare, des commerces
+ * pour une carte d'enseigne).
  */
 export interface GenericLogo {
   id: string
   label: string
+  category: CardCategory
   render: (props: { className?: string }) => JSX.Element
 }
 
@@ -23,6 +29,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'supermarket',
     label: 'Supermarché',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -36,6 +43,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'pharmacy',
     label: 'Pharmacie',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -48,6 +56,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'fuel',
     label: 'Station-service',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -63,6 +72,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'books',
     label: 'Librairie',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -76,6 +86,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'sport',
     label: 'Sport',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -90,6 +101,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'beauty',
     label: 'Beauté',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -103,6 +115,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'restaurant',
     label: 'Restaurant',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -116,6 +129,7 @@ export const LOGOS: GenericLogo[] = [
   {
     id: 'diy',
     label: 'Bricolage',
+    category: 'store',
     render: ({ className }) => (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
         <g {...stroke}>
@@ -124,6 +138,60 @@ export const LOGOS: GenericLogo[] = [
       </svg>
     ),
   },
+  // ── Contenants (tare, achat en vrac) ────────────────────────────────
+  {
+    id: 'jar',
+    label: 'Bocal',
+    category: 'tare',
+    render: ({ className }) => (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+        <g {...stroke}>
+          {/* Couvercle */}
+          <path d="M8 2.5h8v2.2H8z" />
+          {/* Col puis panse du bocal */}
+          <path d="M8.6 4.7v1.8c0 .8-.5 1.3-1.1 1.9A4 4 0 0 0 6 11.2v7.9A2.4 2.4 0 0 0 8.4 21.5h7.2a2.4 2.4 0 0 0 2.4-2.4v-7.9a4 4 0 0 0-1.5-2.8c-.6-.6-1.1-1.1-1.1-1.9V4.7" />
+          {/* Étiquette */}
+          <path d="M8.8 12.5h6.4v4H8.8z" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    id: 'box',
+    label: 'Boîte',
+    category: 'tare',
+    render: ({ className }) => (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+        <g {...stroke}>
+          {/* Boîte en perspective : dessus puis corps */}
+          <path d="M3 7.2 12 3l9 4.2-9 4.2z" />
+          <path d="M3 7.2v9.6L12 21v-9.6" />
+          <path d="M21 7.2v9.6L12 21" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    id: 'bottle',
+    label: 'Bouteille',
+    category: 'tare',
+    render: ({ className }) => (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+        <g {...stroke}>
+          {/* Bouchon, goulot, épaule puis corps */}
+          <path d="M10 2.5h4v2.2h-4z" />
+          <path d="M10.2 4.7v3.1c0 .9-.6 1.5-1.2 2.2A4.2 4.2 0 0 0 8 12.8v6.3A2.4 2.4 0 0 0 10.4 21.5h3.2a2.4 2.4 0 0 0 2.4-2.4v-6.3a4.2 4.2 0 0 0-1-2.8c-.6-.7-1.2-1.3-1.2-2.2V4.7" />
+          {/* Étiquette */}
+          <path d="M8.2 13.5h7.6v3.6H8.2z" />
+        </g>
+      </svg>
+    ),
+  },
 ]
 
 export const LOGO_BY_ID = new Map(LOGOS.map((logo) => [logo.id, logo]))
+
+/** Pictogrammes proposés pour une catégorie donnée. */
+export function logosForCategory(category: CardCategory): GenericLogo[] {
+  return LOGOS.filter((logo) => logo.category === category)
+}

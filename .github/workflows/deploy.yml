@@ -30,6 +30,11 @@ jobs:
 
       - run: npm ci
 
+      # Les tests d'abord : un échec doit empêcher la mise en ligne.
+      # Ils couvrent notamment la migration de schéma Dexie, dont une
+      # régression ferait disparaître des cartes sur les téléphones.
+      - run: npm test
+
       # Le build inclut le typecheck TypeScript (tsc -b && vite build) :
       # une erreur de types casse le déploiement, ce qui est voulu.
       - run: npm run build

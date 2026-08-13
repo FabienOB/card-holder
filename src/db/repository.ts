@@ -1,5 +1,13 @@
 import { db } from './db'
-import type { LoyaltyCard } from '../types'
+import { DEFAULT_CATEGORY, isCardCategory, type LoyaltyCard } from '../types'
+
+/**
+ * Filet de sécurité en lecture : même si la migration Dexie n'a pas pu
+ * s'appliquer, aucune carte ne se retrouve sans catégorie valide.
+ */
+function normalize(card: LoyaltyCard): LoyaltyCard {
+  return isCardCategory(card.category) ? card : { ...card, category: DEFAULT_CATEGORY }
+}
 
 /**
  * Toute opération Dexie passe par ici et remonte une erreur typée :
@@ -17,7 +25,7 @@ export class StorageError extends Error {
 
 export async function listCards(): Promise<LoyaltyCard[]> {
   try {
-    return await db.cards.toArray()
+    return (await db.cards.toArray()).map(normalize)
   } catch (e) {
     throw new StorageError('Impossible de lire les cartes enregistrées.', e)
   }
@@ -25,7 +33,8 @@ export async function listCards(): Promise<LoyaltyCard[]> {
 
 export async function getCard(id: string): Promise<LoyaltyCard | undefined> {
   try {
-    return await db.cards.get(id)
+    const card = await db.cards.get(id)
+    return card ? normalize(card) : undefined
   } catch (e) {
     throw new StorageError('Impossible de lire cette carte.', e)
   }

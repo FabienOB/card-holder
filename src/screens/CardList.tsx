@@ -4,7 +4,7 @@ import { CardTile } from '../components/CardTile'
 import { ErrorState } from '../components/ErrorState'
 import { useCards } from '../hooks/useCards'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
-import type { LoyaltyCard, SortMode } from '../types'
+import { CARD_CATEGORIES, CATEGORY_LABELS, type CardCategory, type LoyaltyCard, type SortMode } from '../types'
 
 /** Normalisation pour la recherche : insensible à la casse et aux accents. */
 function normalize(value: string): string {
@@ -46,17 +46,26 @@ export function CardList() {
   const { cards, status, error, reload } = useCards()
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortMode>('recent')
+  const [category, setCategory] = useState<CardCategory | 'all'>('all')
   const { canPrompt, promptInstall, dismiss } = useInstallPrompt(cards.length > 0)
+
+  // Le filtre ne s'affiche que s'il sert à quelque chose : inutile de
+  // montrer « Enseignes / Bocaux » à qui n'a que des cartes d'enseigne.
+  const usedCategories = useMemo(
+    () => CARD_CATEGORIES.filter((c) => cards.some((card) => card.category === c)),
+    [cards],
+  )
+  const showCategoryFilter = usedCategories.length > 1
 
   const visible = useMemo(() => {
     const needle = normalize(query.trim())
-    const filtered = needle
-      ? cards.filter(
-          (c) => normalize(c.name).includes(needle) || normalize(c.notes ?? '').includes(needle),
-        )
-      : cards
+    const filtered = cards.filter((c) => {
+      if (category !== 'all' && c.category !== category) return false
+      if (!needle) return true
+      return normalize(c.name).includes(needle) || normalize(c.notes ?? '').includes(needle)
+    })
     return sortCards(filtered, sort)
-  }, [cards, query, sort])
+  }, [cards, query, sort, category])
 
   if (status === 'error') {
     return <ErrorState message={error ?? 'Erreur de lecture des données.'} onRetry={reload} />
@@ -121,6 +130,25 @@ export function CardList() {
             </div>
           </div>
         )}
+
+        {showCategoryFilter && (
+          <div className="mt-2 flex gap-2" role="group" aria-label="Filtrer par type">
+            {(['all', ...usedCategories] as const).map((value) => (
+              <button
+                key={value}
+                onClick={() => setCategory(value)}
+                aria-pressed={category === value}
+                className={`min-h-touch rounded-full px-4 text-sm font-medium ${
+                  category === value
+                    ? 'bg-slate-900 text-white'
+                    : 'border border-slate-300 bg-white text-slate-700'
+                }`}
+              >
+                {value === 'all' ? 'Toutes' : CATEGORY_LABELS[value]}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {canPrompt && (
@@ -140,7 +168,11 @@ export function CardList() {
       {cards.length === 0 && status === 'ready' ? (
         <EmptyState />
       ) : visible.length === 0 ? (
-        <p className="px-4 py-16 text-center text-slate-500">Aucune carte ne correspond à « {query} ».</p>
+        <p className="px-4 py-16 text-center text-slate-500">
+          {query.trim()
+            ? `Aucune carte ne correspond à « ${query} ».`
+            : 'Aucune carte dans cette catégorie.'}
+        </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 p-4">
           {visible.map((card) => (

@@ -10,9 +10,31 @@ export class CardHolderDB extends Dexie {
 
   constructor() {
     super('card-holder')
+
     this.version(1).stores({
       cards: 'id, name, lastUsedAt, createdAt',
     })
+
+    /**
+     * v2 — introduction des catégories (enseigne / tare de contenant).
+     *
+     * Les bases déjà installées sur les téléphones contiennent des cartes
+     * sans champ `category` : l'`upgrade` les rattache toutes à « Enseignes »,
+     * qui était le seul usage jusqu'ici. Sans cela, ces cartes seraient
+     * invisibles dans un filtre par catégorie.
+     */
+    this.version(2)
+      .stores({
+        cards: 'id, name, lastUsedAt, createdAt, category',
+      })
+      .upgrade((tx) =>
+        tx
+          .table('cards')
+          .toCollection()
+          .modify((card) => {
+            if (!card.category) card.category = 'store'
+          }),
+      )
   }
 }
 

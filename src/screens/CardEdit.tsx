@@ -10,7 +10,16 @@ import { DEFAULT_COLOR } from '../lib/colors'
 import { findBrand } from '../lib/brands'
 import { resizeImage } from '../lib/image'
 import { guessFormat, validateCode } from '../lib/validation'
-import { BARCODE_FORMATS, FORMAT_LABELS, type BarcodeFormat, type LoyaltyCard } from '../types'
+import {
+  BARCODE_FORMATS,
+  CARD_CATEGORIES,
+  CATEGORY_SINGULAR,
+  DEFAULT_CATEGORY,
+  FORMAT_LABELS,
+  type BarcodeFormat,
+  type CardCategory,
+  type LoyaltyCard,
+} from '../types'
 
 export function CardEdit() {
   const { id } = useParams()
@@ -21,6 +30,7 @@ export function CardEdit() {
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [format, setFormat] = useState<BarcodeFormat>('EAN_13')
+  const [category, setCategory] = useState<CardCategory>(DEFAULT_CATEGORY)
   const [color, setColor] = useState(DEFAULT_COLOR)
   const [notes, setNotes] = useState('')
   const [logoId, setLogoId] = useState<string | undefined>(undefined)
@@ -47,6 +57,7 @@ export function CardEdit() {
     setName(existing.name)
     setCode(existing.code)
     setFormat(existing.format)
+    setCategory(existing.category)
     setColor(existing.color)
     setNotes(existing.notes ?? '')
     setLogoId(existing.logoId)
@@ -63,8 +74,12 @@ export function CardEdit() {
   const codeError = code.trim() ? validateCode(code.trim(), format) : null
   const scannerAvailable = useMemo(() => isScannerSupported(), [])
 
-  // Reconnaissance d'enseigne : purement locale, aucun appel réseau.
-  const brand = useMemo(() => findBrand(name), [name])
+  /**
+   * Reconnaissance d'enseigne : purement locale, aucun appel réseau.
+   * Sans objet pour une tare de contenant — « Bocal 500 g » n'est pas
+   * une enseigne, et on ne veut pas d'une correspondance fortuite.
+   */
+  const brand = useMemo(() => (category === 'store' ? findBrand(name) : undefined), [name, category])
 
   /**
    * Applique la couleur de la marque reconnue. Uniquement sur une **nouvelle**
@@ -109,6 +124,7 @@ export function CardEdit() {
         name: trimmedName,
         code: trimmedCode,
         format,
+        category,
         imageBlob,
         logoId,
         color,
@@ -156,6 +172,32 @@ export function CardEdit() {
       </header>
 
       <div className="space-y-6 p-4">
+        {/* Catégorie : cadre tout le reste du formulaire. */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-medium text-slate-700">Type</h2>
+          <div className="flex overflow-hidden rounded-lg border border-slate-300" role="radiogroup" aria-label="Type de carte">
+            {CARD_CATEGORIES.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={category === value}
+                onClick={() => {
+                  setCategory(value)
+                  // Les pictogrammes sont propres à chaque catégorie :
+                  // celui déjà choisi n'aurait plus de sens.
+                  setLogoId(undefined)
+                }}
+                className={`min-h-touch flex-1 px-3 py-3 text-sm font-medium ${
+                  category === value ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
+                }`}
+              >
+                {CATEGORY_SINGULAR[value]}
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* 1. Scanner — priorité visuelle, masqué si l'API n'existe pas. */}
         {scannerAvailable && (
           <button
@@ -290,7 +332,7 @@ export function CardEdit() {
               setName(e.target.value)
               setErrors((err) => ({ ...err, name: undefined }))
             }}
-            placeholder="Carrefour, Fnac…"
+            placeholder={category === 'tare' ? 'Bocal 500 g, Boîte à vrac…' : 'Carrefour, Fnac…'}
             aria-invalid={!!errors.name}
             aria-describedby="name-error"
             className={`h-12 w-full rounded-lg border bg-white px-3 text-base text-slate-900 focus:outline-none ${
@@ -324,7 +366,7 @@ export function CardEdit() {
         {!imageBlob && (
           <section className="space-y-2">
             <h2 className="text-sm font-medium text-slate-700">Pictogramme</h2>
-            <LogoPicker value={logoId} onChange={setLogoId} />
+            <LogoPicker value={logoId} category={category} onChange={setLogoId} />
           </section>
         )}
 

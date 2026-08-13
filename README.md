@@ -18,6 +18,7 @@ npm run dev        # serveur de développement (http://localhost:5173)
 npm run build      # build de production dans dist/
 npm run preview    # sert le build de production (http://localhost:4173)
 npm run typecheck  # vérification TypeScript seule
+npm test           # lance les 5 suites de tests
 npm run icons      # régénère les icônes PNG et le favicon dans public/
 ```
 
@@ -85,6 +86,22 @@ explicite et un bouton vers la saisie manuelle.
 **une fonction par symbologie** (`ean13`, `code128`, …) avec le backend `drawingSVG()` — le
 même que celui utilisé en interne par `toSVG`. Le SVG produit est identique octet pour octet
 (vérifié sur les 8 formats), et le bundle passe de **1,25 Mo à 558 Ko** (183 Ko gzip).
+
+### Catégories
+
+Chaque carte relève d'une catégorie : **Enseignes** (cartes de fidélité) ou **Bocaux** (codes de
+tare collés sur un contenant, pour l'achat en vrac). La liste d'accueil propose un filtre
+`Toutes / Enseignes / Bocaux`, qui **n'apparaît que si les deux catégories sont utilisées** —
+inutile d'encombrer l'écran de quelqu'un qui n'a que des cartes d'enseigne.
+
+Les pictogrammes proposés suivent la catégorie : bocal, boîte et bouteille pour une tare,
+les huit commerces pour une enseigne. La reconnaissance d'enseigne est désactivée sur une tare
+(« Bocal 500 g » n'est pas un magasin, et une correspondance fortuite serait déroutante).
+
+Le schéma Dexie est passé en **version 2**. Les bases déjà installées sur les téléphones
+contiennent des cartes sans catégorie : l'`upgrade` les rattache toutes à « Enseignes », qui
+était le seul usage jusque-là. Les sauvegardes JSON exportées avant cette évolution s'importent
+sans perte, avec le même repli.
 
 ### Reconnaissance d'enseigne
 
@@ -197,6 +214,24 @@ aux champs via `aria-describedby`.
 Contrastes AA garantis par construction : couleur de texte calculée selon la luminance du fond
 (vérifiée par test sur toute la palette et toutes les couleurs de marque), et voile sombre sur
 les vignettes photo pour que le nom reste lisible quelle que soit l'image.
+
+## Tests
+
+`npm test` — cinq suites, 117 assertions, sans framework : `scripts/run-tests.mjs` bundle chaque
+fichier de `tests/` avec esbuild et l'exécute. Le choix de ne pas ajouter de framework va avec
+l'esprit du projet, dont l'atout principal est de n'avoir aucune dépendance à l'exécution.
+
+| Suite | Couvre |
+| --- | --- |
+| `logic` | checksums EAN, jeux de caractères, UPC-E, rendu bwip-js, aller-retour export/import |
+| `share` | partage natif et ses replis, avec API navigateur simulée |
+| `brands` | reconnaissance d'enseigne + **audit AA de toutes les couleurs** |
+| `categories` | catégories, pictogrammes, compatibilité ascendante des sauvegardes |
+| `migration` | **migration Dexie v1 → v2** sur une vraie IndexedDB (`fake-indexeddb`) |
+
+La suite tourne dans le workflow de déploiement, avant le build : un échec bloque la mise en
+ligne. La migration est la plus critique — une régression y ferait disparaître des cartes sur
+les téléphones déjà équipés.
 
 ## Vérifications effectuées
 
